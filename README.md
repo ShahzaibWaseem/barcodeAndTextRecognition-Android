@@ -22,4 +22,4 @@ This Application can:
 Click this to download [app-debug.apk](https://github.com/ShahzaibWaseem/barcodeAndTextRecognition-Android/blob/master/app/build/outputs/apk/debug/app-debug.apk).
 
 ## Demo
-![Demo GIF](https://github.com/ShahzaibWaseem/barcodeAndTextRecognition-Android/Demo/demo.gif)
+![Demo GIF](https://github.com/ShahzaibWaseem/barcodeAndTextRecognition-Android/blob/master/Demo/demo.gif)
