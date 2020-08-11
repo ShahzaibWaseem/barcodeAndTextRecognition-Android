@@ -77,7 +77,7 @@ class TextRecognition : AppCompatActivity() {
                                 stringBuilder.append(item.value)
                                 stringBuilder.append("\n")
                             }
-                            builder.setTitle("Text Recognition")
+                            builder.setTitle(R.string.textRecognition_text)
                             builder.setMessage(stringBuilder.toString())
                             builder.setPositiveButton("Okay") { dialog, which ->
                                 cameraSource.start(svTextRecognizer.holder)

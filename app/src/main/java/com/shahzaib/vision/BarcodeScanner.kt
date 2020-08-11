@@ -60,6 +60,7 @@ class BarcodeScanner : AppCompatActivity() {
                     val barcodes = p0?.detectedItems
                     if (barcodes!!.size() > 0) {
                         builder.setMessage(barcodes.valueAt(0).displayValue)
+                        builder.setTitle(R.string.barcode_text)
                         builder.setPositiveButton("Okay") { dialog, which ->
                             cameraSource.start(svBarcode.holder)
                         }
