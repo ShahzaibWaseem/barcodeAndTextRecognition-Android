@@ -15,7 +15,8 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
 
-        <activity android:name=".BarcodeScanner">
+        <activity android:name=".BarcodeScanner"
+            android:noHistory="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
 
@@ -24,6 +25,7 @@
         </activity>
 
         <activity android:name=".TextRecognition"
+            android:noHistory="true"
             android:theme="@style/AppTheme" />
 
         <meta-data

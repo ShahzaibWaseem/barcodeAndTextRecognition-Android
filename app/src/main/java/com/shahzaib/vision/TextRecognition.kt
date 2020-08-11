@@ -3,6 +3,7 @@ package com.shahzaib.vision
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.*
 import android.os.Bundle
 import android.os.Handler
 import android.view.SurfaceHolder
@@ -19,8 +20,8 @@ import com.google.android.gms.vision.text.TextBlock
 import com.google.android.gms.vision.text.TextRecognizer
 
 class TextRecognition : AppCompatActivity() {
+    private val CAMERA_REQUEST_CODE = 123
     private lateinit var svTextRecognizer: SurfaceView
-
     private lateinit var recognizer: TextRecognizer
     private lateinit var cameraSource: CameraSource
 
@@ -28,6 +29,16 @@ class TextRecognition : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.textrecognition)
 
+        val actionBar = supportActionBar
+        actionBar?.setTitle(R.string.textRecognition_text)
+
+        val transparentView = findViewById<SurfaceView>(R.id.sv_transparentview)
+
+        val holderTransparent = transparentView.holder
+        holderTransparent.setFormat(PixelFormat.TRANSPARENT)
+        holderTransparent.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS)
+
+        val captureButton = findViewById<Button>(R.id.captureButton)
         val button = findViewById<Button>(R.id.button)
         button.setOnClickListener{
             val intent = Intent(this, BarcodeScanner::class.java)
@@ -48,28 +59,35 @@ class TextRecognition : AppCompatActivity() {
         svTextRecognizer = findViewById(R.id.sv_textrecognition)
 
         recognizer = TextRecognizer.Builder(this).build()
-        recognizer.setProcessor(object : Detector.Processor<TextBlock> {
-            override fun release() {}
-            @SuppressLint("MissingPermission")
-            override fun receiveDetections(textBlockDetections: Detector.Detections<TextBlock>?) {
-                val textBlocks = textBlockDetections?.detectedItems
-                if (textBlocks!!.size() > 0) {
-                    var stringBuilder = StringBuilder()
 
-                    for (i in 0 until textBlocks.size()) {
-                        val item: TextBlock = textBlocks.valueAt(i)
-                        stringBuilder.append(item.getValue())
-                        stringBuilder.append("\n")
+        captureButton.setOnClickListener {
+
+            recognizer.setProcessor(object : Detector.Processor<TextBlock> {
+                override fun release() {}
+
+                @SuppressLint("MissingPermission")
+                override fun receiveDetections(textBlockDetections: Detector.Detections<TextBlock>?) {
+                    captureButton.setOnClickListener {
+                        val textBlocks = textBlockDetections?.detectedItems
+                        if (textBlocks!!.size() > 0) {
+                            val stringBuilder = StringBuilder()
+
+                            for (i in 0 until textBlocks.size()) {
+                                val item: TextBlock = textBlocks.valueAt(i)
+                                stringBuilder.append(item.value)
+                                stringBuilder.append("\n")
+                            }
+                            builder.setTitle("Text Recognition")
+                            builder.setMessage(stringBuilder.toString())
+                            builder.setPositiveButton("Okay") { dialog, which ->
+                                cameraSource.start(svTextRecognizer.holder)
+                            }
+                            taskHandler.post(runnable)
+                        }
                     }
-                    builder.setTitle("Text Recognition")
-                    builder.setMessage(stringBuilder.toString())
-                    builder.setPositiveButton("Okay") { dialog, which ->
-                        cameraSource.start(svTextRecognizer.holder)
-                    }
-                    taskHandler.post(runnable)
                 }
-            }
-        })
+            })
+        }
 
         val height = resources.getInteger(R.integer.cameraHeight)
         val width = resources.getInteger(R.integer.cameraWidth)
@@ -92,7 +110,7 @@ class TextRecognition : AppCompatActivity() {
                 print("4")
                 if (ContextCompat.checkSelfPermission(this@TextRecognition, android.Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED)
                     cameraSource.start(svTextRecognizer.holder)
-                else ActivityCompat.requestPermissions(this@TextRecognition, arrayOf(android.Manifest.permission.CAMERA), 123)
+                else ActivityCompat.requestPermissions(this@TextRecognition, arrayOf(android.Manifest.permission.CAMERA), CAMERA_REQUEST_CODE)
             }
         })
     }
@@ -100,7 +118,7 @@ class TextRecognition : AppCompatActivity() {
     @SuppressLint("MissingPermission")
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == 123) {
+        if (requestCode == CAMERA_REQUEST_CODE) {
             if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)
                 cameraSource.start(svTextRecognizer.holder)
             else Toast.makeText(this, "detector", Toast.LENGTH_SHORT).show()
