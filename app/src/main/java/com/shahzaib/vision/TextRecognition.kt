@@ -25,8 +25,6 @@ import com.google.android.gms.vision.text.TextBlock
 import com.google.android.gms.vision.text.TextRecognizer
 
 class TextRecognition : AppCompatActivity() {
-    private val CAMERA_REQUEST_CODE = 123
-
     private var widthScaleFactor = 2.0f
     private var heightScaleFactor = 2.0f
     private var previewWidth = 1.0f
@@ -70,6 +68,12 @@ class TextRecognition : AppCompatActivity() {
             taskHandler.removeCallbacksAndMessages(null)
         }
 
+        // Bounding Box Paint Object
+        val rectPaint = Paint()
+        rectPaint.color = Color.WHITE
+        rectPaint.style = Paint.Style.STROKE
+        rectPaint.strokeWidth = 4.0f
+
         svTextRecognizer = findViewById(R.id.sv_textrecognition)
         recognizer = TextRecognizer.Builder(this).build()
         recognizer.setProcessor(object : Detector.Processor<TextBlock> {
@@ -79,17 +83,10 @@ class TextRecognition : AppCompatActivity() {
             override fun receiveDetections(textBlockDetections: Detector.Detections<TextBlock>?) {
                 textBlocks = textBlockDetections?.detectedItems as SparseArray<TextBlock>
 
-                var canvas = holderTransparent.lockCanvas()
-                canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR)
-                holderTransparent.unlockCanvasAndPost(canvas)
+                clearCanvas(holderTransparent)
 
                 if (textBlocks.size() > 0 && recognizedTextCount < 3) {
                     val stringBuilder = StringBuilder()
-
-                    val rectPaint = Paint()
-                    rectPaint.color = Color.WHITE
-                    rectPaint.style = Paint.Style.STROKE
-                    rectPaint.strokeWidth = 4.0f
 
                     // Break the text into multiple lines and draw each one according to its own bounding box.
                     for (block in textBlocks.valueIterator()) {
@@ -99,7 +96,7 @@ class TextRecognition : AppCompatActivity() {
                         stringBuilder.append("\n")
 
                         for (currentText: Text? in textComponents) {
-                            canvas = holderTransparent.lockCanvas()
+                            val canvas = holderTransparent.lockCanvas()
                             if (currentText != null) {
                                 var rect = RectF(currentText.boundingBox)
 
@@ -110,11 +107,7 @@ class TextRecognition : AppCompatActivity() {
                             }
                         }
                     }
-
-                    canvas = holderTransparent.lockCanvas()
-                    canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR)
-                    holderTransparent.unlockCanvasAndPost(canvas)
-
+                    clearCanvas(holderTransparent)
                     captureButton.setOnClickListener {
                         recognizedTextCount++
 //                        TODO("Add conditional checks so that the text is only added if a similarity is found compared to the previous text appended.")
@@ -122,10 +115,6 @@ class TextRecognition : AppCompatActivity() {
                         Log.i("Recognized Text Count", recognizedTextCount.toString())
 
                         if (recognizedTextCount < 3) {
-                            canvas = holderTransparent.lockCanvas()
-                            canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR)
-                            holderTransparent.unlockCanvasAndPost(canvas)
-
                             builder.setTitle(R.string.textRecognition_text)
                             builder.setMessage(stringBuilder.toString())
                             builder.setPositiveButton("Okay") { _, _ ->
@@ -194,6 +183,12 @@ class TextRecognition : AppCompatActivity() {
         }
     }
 
+    private fun clearCanvas(holder: SurfaceHolder){
+        val canvas = holder.lockCanvas()
+        canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR)
+        holder.unlockCanvasAndPost(canvas)
+    }
+
     private fun scaleX(horizontal: Float): Float {
         return horizontal * widthScaleFactor
     }
@@ -230,5 +225,11 @@ class TextRecognition : AppCompatActivity() {
         recognizer.release()
         cameraSource.stop()
         cameraSource.release()
+    }
+
+    // Constants
+    companion object {
+        const val CAMERA_REQUEST_CODE = 123
+
     }
 }
