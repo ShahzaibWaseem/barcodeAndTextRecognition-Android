@@ -20,7 +20,6 @@ import com.google.android.gms.vision.barcode.Barcode
 import com.google.android.gms.vision.barcode.BarcodeDetector
 
 class BarcodeScanner : AppCompatActivity() {
-    private val CAMERA_REQUEST_CODE = 123
     private lateinit var svBarcode: SurfaceView
     private lateinit var detector: BarcodeDetector
     private lateinit var cameraSource: CameraSource
@@ -113,5 +112,10 @@ class BarcodeScanner : AppCompatActivity() {
         detector.release()
         cameraSource.stop()
         cameraSource.release()
+    }
+
+    // Constants
+    companion object {
+        const val CAMERA_REQUEST_CODE = 123
     }
 }

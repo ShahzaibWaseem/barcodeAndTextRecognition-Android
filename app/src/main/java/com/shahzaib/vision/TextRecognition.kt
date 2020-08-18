@@ -230,6 +230,5 @@ class TextRecognition : AppCompatActivity() {
     // Constants
     companion object {
         const val CAMERA_REQUEST_CODE = 123
-
     }
 }
