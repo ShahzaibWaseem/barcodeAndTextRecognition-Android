@@ -5,6 +5,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.os.Handler
+import android.util.Log
 import android.view.SurfaceHolder
 import android.view.SurfaceView
 import android.widget.Button
@@ -36,17 +37,16 @@ class BarcodeScanner : AppCompatActivity() {
         button.setOnClickListener{
             val intent = Intent(this, TextRecognition::class.java)
             startActivity(intent)
+            finish()
         }
 
         val builder = AlertDialog.Builder(this)
-        var taskHandler = Handler()
-        var runnable = object:Runnable{
-            override fun run() {
-                cameraSource.stop()
-                val alert = builder.create()
-                alert.show()
-                taskHandler.removeCallbacksAndMessages(null)
-            }
+        val taskHandler = Handler()
+        val runnable = Runnable {
+            cameraSource.stop()
+            val alert = builder.create()
+            alert.show()
+            taskHandler.removeCallbacksAndMessages(null)
         }
 
         svBarcode = findViewById(R.id.sv_barcode)
@@ -61,7 +61,7 @@ class BarcodeScanner : AppCompatActivity() {
                     if (barcodes!!.size() > 0) {
                         builder.setMessage(barcodes.valueAt(0).displayValue)
                         builder.setTitle(R.string.barcode_text)
-                        builder.setPositiveButton("Okay") { dialog, which ->
+                        builder.setPositiveButton("Okay") { _, _ ->
                             cameraSource.start(svBarcode.holder)
                         }
                         taskHandler.post(runnable)
@@ -78,17 +78,19 @@ class BarcodeScanner : AppCompatActivity() {
             .setRequestedFps(fps).setAutoFocusEnabled(true).build()
         svBarcode.holder.addCallback(object : SurfaceHolder.Callback2 {
             override fun surfaceRedrawNeeded(p0: SurfaceHolder) {
-                print("1")
+                Log.i("Surface Log", "Surface Redrawn Needed")
             }
             override fun surfaceChanged(p0: SurfaceHolder, format: Int, width: Int, height: Int) {
-                print("2")
+                Log.i("Surface Log", "Surface Changed")
+                if (ContextCompat.checkSelfPermission(this@BarcodeScanner, android.Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED)
+                    cameraSource.start(svBarcode.holder)
+                else ActivityCompat.requestPermissions(this@BarcodeScanner, arrayOf(android.Manifest.permission.CAMERA), CAMERA_REQUEST_CODE)
             }
             override fun surfaceDestroyed(p0: SurfaceHolder) {
-                print("3")
-                cameraSource.stop()
+                Log.i("Surface Log", "Surface Destroyed")
             }
             override fun surfaceCreated(p0: SurfaceHolder) {
-                print("4")
+                Log.i("Surface Log", "Surface Created")
                 if (ContextCompat.checkSelfPermission(this@BarcodeScanner, android.Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED)
                     cameraSource.start(svBarcode.holder)
                 else ActivityCompat.requestPermissions(this@BarcodeScanner, arrayOf(android.Manifest.permission.CAMERA), CAMERA_REQUEST_CODE)

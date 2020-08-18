@@ -2,7 +2,8 @@
     <string name="app_name">Vision</string>
     <string name="barcode_text">Barcode Scanning</string>
     <string name="textRecognition_text">Text Recognition</string>
-    <integer name="cameraHeight">1024</integer>
-    <integer name="cameraWidth">768</integer>
-    <integer name="requestedFps">30</integer>
+    <string name="recognized_text">Recognized Text</string>
+    <integer name="cameraHeight">1170</integer>
+    <integer name="cameraWidth">540</integer>
+    <integer name="requestedFps">60</integer>
 </resources>

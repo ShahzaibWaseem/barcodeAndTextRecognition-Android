@@ -17,7 +17,7 @@
         android:layout_alignParentTop="true"
         android:id="@+id/sv_transparentview"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent"/>
 
     <View
         android:id="@+id/view_bottom"
