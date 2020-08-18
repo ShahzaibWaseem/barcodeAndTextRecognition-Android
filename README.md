@@ -12,11 +12,11 @@ This Application can:
 - AndroidX
 - Target SDK Version: 30
 - Minimum SDK Version: 23
-- Google "Play Services Vision" Version: 20.1.0
+- Google "Play Services Vision" Version: 20.1.1 (Updated from 20.1.0)
+	- CameraSource
 	- BarcodeDetector & Barcode
-	- TextRecognizer & TextBlock
+	- TextRecognizer & TextBlock/Text
 - Kotlin Version: 1.3.72
-- Google CameraSource
 
 ### APK Files
 Click this to download [app-debug.apk](https://github.com/ShahzaibWaseem/barcodeAndTextRecognition-Android/blob/master/app/build/outputs/apk/debug/app-debug.apk).
