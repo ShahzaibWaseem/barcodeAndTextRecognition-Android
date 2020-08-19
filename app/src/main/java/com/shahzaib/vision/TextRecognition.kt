@@ -3,6 +3,7 @@ package com.shahzaib.vision
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.content.res.Resources
 import android.graphics.*
 import android.os.Bundle
 import android.os.Handler
@@ -133,9 +134,14 @@ class TextRecognition : AppCompatActivity() {
             }
         })
 
-        val height = resources.getInteger(R.integer.cameraHeight)
-        val width = resources.getInteger(R.integer.cameraWidth)
+        var height = resources.getInteger(R.integer.cameraHeight)
+        var width = resources.getInteger(R.integer.cameraWidth)
         val fps = resources.getInteger(R.integer.requestedFps).toFloat()
+
+        width = Resources.getSystem().displayMetrics.widthPixels
+        height = Resources.getSystem().displayMetrics.heightPixels
+
+        Log.i("Display Size", "$height x $width")
 
         cameraSource = CameraSource.Builder(this, recognizer).setRequestedPreviewSize(height, width)
             .setRequestedFps(fps).setAutoFocusEnabled(true).build()
@@ -167,9 +173,9 @@ class TextRecognition : AppCompatActivity() {
 
     private fun setScalingFactors(holder: SurfaceHolder){
         val size: Size = cameraSource.previewSize
+
         previewWidth = svTextRecognizer.width.toFloat()
         previewHeight = svTextRecognizer.height.toFloat()
-
         Log.i("Preview Size", "$previewHeight x $previewWidth")
         Log.i("Camera Resolution Size", size.height.toString() + " x " + size.width.toString())
 
