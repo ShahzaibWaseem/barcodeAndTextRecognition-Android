@@ -70,12 +70,9 @@ class BarcodeScanner : AppCompatActivity() {
             }
         })
 
-        var height = resources.getInteger(R.integer.cameraHeight)
-        var width = resources.getInteger(R.integer.cameraWidth)
+        val height: Int = Resources.getSystem().displayMetrics.heightPixels
+        val width: Int = Resources.getSystem().displayMetrics.widthPixels
         val fps = resources.getInteger(R.integer.requestedFps).toFloat()
-
-        width = Resources.getSystem().displayMetrics.widthPixels
-        height = Resources.getSystem().displayMetrics.heightPixels
 
         Log.i("Display Size", "$height x $width")
 

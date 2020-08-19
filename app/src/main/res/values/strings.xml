@@ -3,7 +3,5 @@
     <string name="barcode_text">Barcode Scanning</string>
     <string name="textRecognition_text">Text Recognition</string>
     <string name="recognized_text">Recognized Text</string>
-    <integer name="cameraHeight">1170</integer>
-    <integer name="cameraWidth">540</integer>
     <integer name="requestedFps">60</integer>
 </resources>
