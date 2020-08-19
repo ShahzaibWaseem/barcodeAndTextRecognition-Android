@@ -180,12 +180,10 @@ class TextRecognition : AppCompatActivity() {
         Log.i("Camera Resolution Size", size.height.toString() + " x " + size.width.toString())
 
         if (previewWidth != 0f && previewHeight != 0f) {
-            val canvas = holder.lockCanvas()
             widthScaleFactor = previewWidth / size.height
             heightScaleFactor = previewHeight / size.width
             Log.i("Scaling Factor", "Width Scaling: " + widthScaleFactor.toString()
                     + ", Height Scaling: " + heightScaleFactor.toString())
-            holder.unlockCanvasAndPost(canvas)
         }
     }
 
