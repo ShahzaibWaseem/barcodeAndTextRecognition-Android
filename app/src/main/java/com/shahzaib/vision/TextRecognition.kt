@@ -1,5 +1,8 @@
 package com.shahzaib.vision
 
+import java.util.*
+import kotlin.collections.ArrayList
+import kotlin.math.abs
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -23,9 +26,6 @@ import com.google.android.gms.vision.Detector
 import com.google.android.gms.vision.text.Text
 import com.google.android.gms.vision.text.TextBlock
 import com.google.android.gms.vision.text.TextRecognizer
-import java.util.*
-import kotlin.collections.ArrayList
-import kotlin.math.abs
 
 class TextRecognition : AppCompatActivity() {
     private var widthScaleFactor = 2.0f
@@ -88,8 +88,8 @@ class TextRecognition : AppCompatActivity() {
                 val numberOfDetections = textBlocks.size()
 
                 clearCanvas(holderTransparent)
-                // TODO Add recognizedTextCount <= SIZE_OF_DETECTION_HISTORY check here
-                if (textBlocks.size() > 0) {
+
+                if (textBlocks.size() > 0 && recognizedTextCount < SIZE_OF_DETECTION_HISTORY) {
                     val stringBuilder = StringBuilder()
 
                     // Break the text into multiple lines and draw each one according to its own bounding box.
@@ -158,6 +158,7 @@ class TextRecognition : AppCompatActivity() {
 
             override fun surfaceDestroyed(p0: SurfaceHolder) {
                 Log.i("Surface Log", "Surface Destroyed")
+                finish()
             }
 
             override fun surfaceCreated(p0: SurfaceHolder) {
@@ -231,6 +232,7 @@ class TextRecognition : AppCompatActivity() {
         recognizer.release()
         cameraSource.stop()
         cameraSource.release()
+        finish()
     }
 
     // Constants
