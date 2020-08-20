@@ -1,7 +1,7 @@
 package com.shahzaib.vision
 
 import android.annotation.SuppressLint
-import android.content.Intent
+import android.content.*
 import android.content.pm.PackageManager
 import android.content.res.Resources
 import android.os.Bundle
@@ -32,7 +32,6 @@ class BarcodeScanner : AppCompatActivity() {
         val actionBar = supportActionBar
         actionBar?.setTitle(R.string.barcode_text)
 
-        val captureButton = findViewById<Button>(R.id.captureButton)
         val button = findViewById<Button>(R.id.button)
         button.setOnClickListener{
             val intent = Intent(this, TextRecognition::class.java)
@@ -54,18 +53,24 @@ class BarcodeScanner : AppCompatActivity() {
         detector = BarcodeDetector.Builder(this).setBarcodeFormats(Barcode.ALL_FORMATS).build()
         detector.setProcessor(object : Detector.Processor<Barcode> {
             override fun release() {}
+
             @SuppressLint("MissingPermission")
             override fun receiveDetections(p0: Detector.Detections<Barcode>?) {
-                captureButton.setOnClickListener {
-                    val barcodes = p0?.detectedItems
-                    if (barcodes!!.size() > 0) {
-                        builder.setMessage(barcodes.valueAt(0).displayValue)
-                        builder.setTitle(R.string.barcode_text)
-                        builder.setPositiveButton("Okay") { _, _ ->
-                            cameraSource.start(svBarcode.holder)
-                        }
-                        taskHandler.post(runnable)
+                val barcodes = p0?.detectedItems
+                if (barcodes!!.size() > 0) {
+                    builder.setMessage(barcodes.valueAt(0).displayValue)
+                    builder.setTitle(R.string.barcode_text)
+                    builder.setPositiveButton("Okay") { _, _ ->
+                        cameraSource.start(svBarcode.holder)
                     }
+                    builder.setNeutralButton("Copy") { _, _ ->
+                        val clipboard: ClipboardManager = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                        val clip = ClipData.newPlainText("Barcode Result", barcodes.valueAt(0).displayValue)
+                        clipboard.setPrimaryClip(clip)
+                        Toast.makeText(this@BarcodeScanner, "Text Copied to Clipboard", Toast.LENGTH_SHORT).show()
+                        cameraSource.start(svBarcode.holder)
+                    }
+                    taskHandler.post(runnable)
                 }
             }
         })
@@ -82,26 +87,49 @@ class BarcodeScanner : AppCompatActivity() {
             override fun surfaceRedrawNeeded(p0: SurfaceHolder) {
                 Log.i("Surface Log", "Surface Redrawn Needed")
             }
+
             override fun surfaceChanged(p0: SurfaceHolder, format: Int, width: Int, height: Int) {
                 Log.i("Surface Log", "Surface Changed")
-                if (ContextCompat.checkSelfPermission(this@BarcodeScanner, android.Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED)
+                if (ContextCompat.checkSelfPermission(
+                        this@BarcodeScanner,
+                        android.Manifest.permission.CAMERA
+                    ) == PackageManager.PERMISSION_GRANTED
+                )
                     cameraSource.start(svBarcode.holder)
-                else ActivityCompat.requestPermissions(this@BarcodeScanner, arrayOf(android.Manifest.permission.CAMERA), CAMERA_REQUEST_CODE)
+                else ActivityCompat.requestPermissions(
+                    this@BarcodeScanner,
+                    arrayOf(android.Manifest.permission.CAMERA),
+                    CAMERA_REQUEST_CODE
+                )
             }
+
             override fun surfaceDestroyed(p0: SurfaceHolder) {
                 Log.i("Surface Log", "Surface Destroyed")
             }
+
             override fun surfaceCreated(p0: SurfaceHolder) {
                 Log.i("Surface Log", "Surface Created")
-                if (ContextCompat.checkSelfPermission(this@BarcodeScanner, android.Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED)
+                if (ContextCompat.checkSelfPermission(
+                        this@BarcodeScanner,
+                        android.Manifest.permission.CAMERA
+                    ) == PackageManager.PERMISSION_GRANTED
+                )
                     cameraSource.start(svBarcode.holder)
-                else ActivityCompat.requestPermissions(this@BarcodeScanner, arrayOf(android.Manifest.permission.CAMERA), CAMERA_REQUEST_CODE)
+                else ActivityCompat.requestPermissions(
+                    this@BarcodeScanner,
+                    arrayOf(android.Manifest.permission.CAMERA),
+                    CAMERA_REQUEST_CODE
+                )
             }
         })
     }
 
     @SuppressLint("MissingPermission")
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == CAMERA_REQUEST_CODE) {
             if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)

@@ -1,12 +1,14 @@
 package com.shahzaib.vision
 
 import android.annotation.SuppressLint
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Resources
 import android.graphics.*
-import android.os.Bundle
-import android.os.Handler
+import android.os.*
 import android.util.Log
 import android.util.SparseArray
 import android.view.SurfaceHolder
@@ -24,6 +26,9 @@ import com.google.android.gms.vision.Detector
 import com.google.android.gms.vision.text.Text
 import com.google.android.gms.vision.text.TextBlock
 import com.google.android.gms.vision.text.TextRecognizer
+import java.util.*
+import kotlin.collections.ArrayList
+import kotlin.math.abs
 
 class TextRecognition : AppCompatActivity() {
     private var widthScaleFactor = 2.0f
@@ -38,6 +43,7 @@ class TextRecognition : AppCompatActivity() {
     private lateinit var textBlocks : SparseArray<TextBlock>
 
     private var recognizedTextHistory: ArrayList<String> = kotlin.collections.ArrayList()
+    private var previousFrameDetectionCount = 0     // number of textBlocks detected in the previous frame
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -52,7 +58,6 @@ class TextRecognition : AppCompatActivity() {
         holderTransparent.setFormat(PixelFormat.TRANSPARENT)
         holderTransparent.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS)
 
-        val captureButton = findViewById<Button>(R.id.captureButton)
         val button = findViewById<Button>(R.id.button)
         button.setOnClickListener{
             val intent = Intent(this, BarcodeScanner::class.java)
@@ -83,10 +88,11 @@ class TextRecognition : AppCompatActivity() {
             @SuppressLint("MissingPermission")
             override fun receiveDetections(textBlockDetections: Detector.Detections<TextBlock>?) {
                 textBlocks = textBlockDetections?.detectedItems as SparseArray<TextBlock>
+                val numberOfDetections = textBlocks.size()
 
                 clearCanvas(holderTransparent)
-
-                if (textBlocks.size() > 0 && recognizedTextCount < 3) {
+                // TODO Add recognizedTextCount <= SIZE_OF_DETECTION_HISTORY check here
+                if (textBlocks.size() > 0) {
                     val stringBuilder = StringBuilder()
 
                     // Break the text into multiple lines and draw each one according to its own bounding box.
@@ -94,7 +100,6 @@ class TextRecognition : AppCompatActivity() {
                         val textComponents: List<Text?> = block.components
 
                         stringBuilder.append(block.value)
-                        stringBuilder.append("\n")
 
                         for (currentText: Text? in textComponents) {
                             val canvas = holderTransparent.lockCanvas()
@@ -104,31 +109,30 @@ class TextRecognition : AppCompatActivity() {
                                 Log.i("Bounding Box", currentText.boundingBox.toString())
                                 rect = translateRect(rect, currentText)
                                 canvas.drawRect(rect, rectPaint)
+
                                 holderTransparent.unlockCanvasAndPost(canvas)
                             }
                         }
+                        stringBuilder.append("\n")
                     }
                     clearCanvas(holderTransparent)
-                    captureButton.setOnClickListener {
+                    if (abs(numberOfDetections - previousFrameDetectionCount) <= BOUNDING_BOXES_DIFFERENCE_ALLOWED) {
                         recognizedTextCount++
+                        Log.i("History Recognized", "Number of Items added to the History: $recognizedTextCount")
 //                        TODO("Add conditional checks so that the text is only added if a similarity is found compared to the previous text appended.")
-                        recognizedTextHistory.add(stringBuilder.toString())
+                        recognizedTextHistory.add(stringBuilder.toString().trim().toLowerCase(Locale.ROOT).capitalize(Locale.ROOT))
                         Log.i("Recognized Text Count", recognizedTextCount.toString())
+                    } else {
+                        recognizedTextCount = 0
+                        recognizedTextHistory.clear()
+                        previousFrameDetectionCount = numberOfDetections
+                    }
 
-                        if (recognizedTextCount < 3) {
-                            builder.setTitle(R.string.textRecognition_text)
-                            builder.setMessage(stringBuilder.toString())
-                            builder.setPositiveButton("Okay") { _, _ ->
-                                cameraSource.start(svTextRecognizer.holder)
-                            }
-                            taskHandler.post(runnable)
-                        }
-                        else if (recognizedTextCount >= 3){
-                            val intent = Intent(this@TextRecognition, RecognizedActivity::class.java)
-                            intent.putStringArrayListExtra("recognizedTextHistory", recognizedTextHistory)
-                            startActivity(intent)
-                            finish()
-                        }
+                    if (recognizedTextCount >= SIZE_OF_DETECTION_HISTORY){
+                        val intent = Intent(this@TextRecognition, RecognizedActivity::class.java)
+                        intent.putStringArrayListExtra("recognizedTextHistory", recognizedTextHistory)
+                        startActivity(intent)
+                        finish()
                     }
                 }
             }
@@ -136,16 +140,16 @@ class TextRecognition : AppCompatActivity() {
 
         val height: Int = Resources.getSystem().displayMetrics.heightPixels
         val width: Int = Resources.getSystem().displayMetrics.widthPixels
-        val fps = resources.getInteger(R.integer.requestedFps).toFloat()
+        val fps: Float = resources.getInteger(R.integer.requestedFps).toFloat()
 
         Log.i("Display Size", "$height x $width")
 
-        cameraSource = CameraSource.Builder(this, recognizer).setRequestedPreviewSize(height, width)
-            .setRequestedFps(fps).setAutoFocusEnabled(true).build()
+        cameraSource = CameraSource.Builder(this, recognizer).setRequestedPreviewSize(height, width).setRequestedFps(fps).setAutoFocusEnabled(true).build()
         svTextRecognizer.holder.addCallback(object : SurfaceHolder.Callback2 {
             override fun surfaceRedrawNeeded(p0: SurfaceHolder) {
                 Log.i("Surface Log", "Surface Redrawn Needed")
             }
+
             override fun surfaceChanged(p0: SurfaceHolder, format: Int, width: Int, height: Int) {
                 Log.i("Surface Log", "Surface Changed")
                 if (ContextCompat.checkSelfPermission(this@TextRecognition, android.Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
@@ -154,16 +158,17 @@ class TextRecognition : AppCompatActivity() {
                 }
                 else ActivityCompat.requestPermissions(this@TextRecognition, arrayOf(android.Manifest.permission.CAMERA), CAMERA_REQUEST_CODE)
             }
+
             override fun surfaceDestroyed(p0: SurfaceHolder) {
                 Log.i("Surface Log", "Surface Destroyed")
             }
+
             override fun surfaceCreated(p0: SurfaceHolder) {
                 Log.i("Surface Log", "Surface Created")
                 if (ContextCompat.checkSelfPermission(this@TextRecognition, android.Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
                     cameraSource.start(svTextRecognizer.holder)
                     setScalingFactors(svTextRecognizer.holder)
-                }
-                else ActivityCompat.requestPermissions(this@TextRecognition, arrayOf(android.Manifest.permission.CAMERA), CAMERA_REQUEST_CODE)
+                } else ActivityCompat.requestPermissions(this@TextRecognition, arrayOf(android.Manifest.permission.CAMERA),CAMERA_REQUEST_CODE)
             }
         })
     }
@@ -179,8 +184,7 @@ class TextRecognition : AppCompatActivity() {
         if (previewWidth != 0f && previewHeight != 0f) {
             widthScaleFactor = previewWidth / size.height
             heightScaleFactor = previewHeight / size.width
-            Log.i("Scaling Factor", "Width Scaling: " + widthScaleFactor.toString()
-                    + ", Height Scaling: " + heightScaleFactor.toString())
+            Log.i("Scaling Factor", "Width Scaling: $widthScaleFactor, Height Scaling: $heightScaleFactor")
         }
     }
 
@@ -210,7 +214,11 @@ class TextRecognition : AppCompatActivity() {
     }
 
     @SuppressLint("MissingPermission")
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == CAMERA_REQUEST_CODE) {
             if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
@@ -231,5 +239,7 @@ class TextRecognition : AppCompatActivity() {
     // Constants
     companion object {
         const val CAMERA_REQUEST_CODE = 123
+        const val SIZE_OF_DETECTION_HISTORY = 3
+        const val BOUNDING_BOXES_DIFFERENCE_ALLOWED = 10      // Allowance for number of boundingBoxes created between two frames
     }
 }
